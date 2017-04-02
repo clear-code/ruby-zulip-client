@@ -47,7 +47,7 @@ module Zulip
         request.body = params
       end
       if response.success?
-        res = JSON.parse(response.body)
+        res = JSON.parse(response.body, symbolize_names: true)
         [res["queue_id"], res["last_event_id"]]
       else
         raise Zulip::ResponseError, reqponse.reason_phrase
@@ -60,9 +60,9 @@ module Zulip
         request.body = { "queue_id" => queue_id }
       end
       if response.success?
-        JSON.parse(response.body)["result"] == "success"
+        JSON.parse(response.body, symbolize_names: true)[:result] == "success"
       else
-        raise Zulip::ResponseError, JSON.parse(response.body)["msg"]
+        raise Zulip::ResponseError, JSON.parse(response.body, symbolize_names: true)[:msg]
       end
     end
 
@@ -100,7 +100,7 @@ module Zulip
         request.params["last_event_id"] = last_event_id
       end
       if response.success?
-        JSON.parse(response.body)
+        JSON.parse(response.body, symbolize_names: true)
       else
         raise Zulip::ResponseError, response.reason_phrase
       end
