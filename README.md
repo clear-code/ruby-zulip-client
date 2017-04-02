@@ -1,8 +1,6 @@
 # Zulip::Client
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/zulip/client`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+[Zulip](https://zulip.org/) client for [Ruby](https://www.ruby-lang.org/).
 
 ## Installation
 
@@ -22,13 +20,37 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Send message to stream:
 
-## Development
+```ruby
+client = Zulip::Client.new(site: "https://zulip.example.com/",
+                           username: "test-bot@zulip.example.com",
+                           api_token: "xxxxxxxxxxxxx")
+client.send_message(type: :stream, to: "general", subject: "projects", content: "Hello, Zulip!")
+```
 
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+Send private message to users:
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+```ruby
+client.send_message(type: :stream, to: "user@zulip.example.com", content: "Hello, Zulip!")
+client.send_message(type: :stream, to: ["user1@zulip.example.com", "user2@zulip.example.com"], content: "Hello, Zulip!")
+```
+
+Receive all events:
+
+```ruby
+client.each_event do |event|
+  p event
+end
+```
+
+Receive message event:
+
+```ruby
+client.each_message do |event|
+  p event
+end
+```
 
 ## Contributing
 
