@@ -48,7 +48,7 @@ module Zulip
       end
       if response.success?
         res = JSON.parse(response.body, symbolize_names: true)
-        [res["queue_id"], res["last_event_id"]]
+        [res[:queue_id], res[:last_event_id]]
       else
         raise Zulip::ResponseError, reqponse.reason_phrase
       end
@@ -70,9 +70,9 @@ module Zulip
       queue_id, last_event_id = register(event_types: event_types, narrow: narrow)
       loop do
         response = get_events(queue_id: queue_id, last_event_id: last_event_id)
-        if response["result"] == "success"
-          response["events"].each do |event|
-            last_event_id = event["id"]
+        if response[:result] == "success"
+          response[:events].each do |event|
+            last_event_id = event[:id]
             yield event
           end
         else
@@ -86,7 +86,7 @@ module Zulip
 
     def each_message(narrow: [])
       each_event(event_types: ["message"], narrow: narrow) do |event|
-        next unless event["type"] == "message"
+        next unless event[:type] == "message"
         yield event
       end
     end
