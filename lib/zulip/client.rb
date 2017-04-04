@@ -66,7 +66,7 @@ module Zulip
       end
     end
 
-    def each_event(event_types: [], narrow: [])
+    def stream_event(event_types: [], narrow: [])
       queue_id, last_event_id = register(event_types: event_types, narrow: narrow)
       loop do
         response = get_events(queue_id: queue_id, last_event_id: last_event_id)
@@ -84,9 +84,8 @@ module Zulip
       unregister(queue_id)
     end
 
-    def each_message(narrow: [])
-      each_event(event_types: ["message"], narrow: narrow) do |event|
-        next unless event[:type] == "message"
+    def stream_message(narrow: [])
+      stream_event(event_types: ["message"], narrow: narrow) do |event|
         yield event
       end
     end
