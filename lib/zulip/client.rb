@@ -12,13 +12,13 @@ module Zulip
   class Client
     attr_accessor :debug
 
-    def initialize(site:, username:, api_token:, **options)
+    def initialize(site:, username:, api_key:, **options)
       @site = URI.parse(site)
       @connection = Faraday.new(@site.to_s, options) do |faraday|
         faraday.adapter Faraday.default_adapter
         yield faraday if block_given?
       end
-      @connection.basic_auth(username, api_token)
+      @connection.basic_auth(username, api_key)
       @debug = false
     end
 
