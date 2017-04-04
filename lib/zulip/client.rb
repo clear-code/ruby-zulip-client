@@ -19,6 +19,7 @@ module Zulip
         yield faraday if block_given?
       end
       @connection.basic_auth(username, api_key)
+      @running = false
       @debug = false
     end
 
@@ -68,26 +69,56 @@ module Zulip
 
     def stream_event(event_types: [], narrow: [])
       queue_id, last_event_id = register(event_types: event_types, narrow: narrow)
-      loop do
-        response = get_events(queue_id: queue_id, last_event_id: last_event_id)
-        if response[:result] == "success"
-          response[:events].each do |event|
-            last_event_id = event[:id]
-            yield event
-          end
-        else
-          raise Zulip::ResponseError, response["msg"]
+      response_reader, response_writer = IO.pipe
+      command_reader, @command_writer = IO.pipe
+      @running = true
+      t = Thread.new do
+        loop do
+          break unless @running
+          response = get_events(queue_id: queue_id, last_event_id: last_event_id)
+          response_writer.write(response)
         end
-        sleep(1)
       end
-    ensure
+      buf = ""
+      loop do
+        reader, _writer, _exception = IO.select([response_reader, command_reader])
+        case reader.first
+        when response_reader
+          buf << response_reader.readpartial(1024)
+          begin
+            res = JSON.parse(buf, symbolize_names: true)
+          rescue JSON::ParserError => ex
+            warn("#{ex.class}:#{ex.message}")
+            next
+          end
+          buf = ""
+          if res[:result] == "success"
+            res[:events].each do |event|
+              last_event_id = event[:id]
+              if event_types.empty? || event_types.include?(event[:type])
+                yield event
+              end
+            end
+          else
+            raise Zulip::ResponseError, res[:msg]
+          end
+        when command_reader
+          break
+        end
+      end
       unregister(queue_id)
+      t.join
     end
 
     def stream_message(narrow: [])
       stream_event(event_types: ["message"], narrow: narrow) do |event|
-        yield event
+        yield event[:message]
       end
+    end
+
+    def close_stream
+      @running = false
+      @command_writer.write("q") if @command_writer
     end
 
     private
@@ -99,7 +130,7 @@ module Zulip
         request.params["last_event_id"] = last_event_id
       end
       if response.success?
-        JSON.parse(response.body, symbolize_names: true)
+        response.body
       else
         raise Zulip::ResponseError, response.reason_phrase
       end
