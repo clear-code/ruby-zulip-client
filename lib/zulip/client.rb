@@ -39,6 +39,14 @@ module Zulip
       end
     end
 
+    def send_public_message(to:, subject:, content:)
+      send_message(type: :stream, to: to, subject: subject, content: content)
+    end
+
+    def send_private_message(to:, content:)
+      send_message(type: :private, to: to, content: content)
+    end
+
     def register(event_types: [], narrow: [])
       response = @connection.post do |request|
         request.url("/api/v1/register")
