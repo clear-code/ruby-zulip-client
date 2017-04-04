@@ -95,8 +95,8 @@ module Zulip
           buf << response_reader.readpartial(1024)
           begin
             res = JSON.parse(buf, symbolize_names: true)
-          rescue JSON::ParserError => ex
-            warn("#{ex.class}:#{ex.message}")
+          rescue JSON::ParserError
+            # Ignore error because buf is incomplete JSON
             next
           end
           buf = ""
