@@ -85,6 +85,7 @@ module Zulip
           break unless @running
           response = get_events(queue_id: queue_id, last_event_id: last_event_id)
           response_writer.write(response)
+          sleep(1)
         end
       end
       buf = ""
@@ -136,6 +137,7 @@ module Zulip
         request.url("/api/v1/events")
         request.params["queue_id"] = queue_id
         request.params["last_event_id"] = last_event_id
+        request.params["dont_block"] = true
       end
       if response.success?
         response.body
