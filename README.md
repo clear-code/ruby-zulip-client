@@ -32,8 +32,8 @@ client.send_message(type: :stream, to: "general", subject: "projects", content: 
 Send private message to users:
 
 ```ruby
-client.send_message(type: :stream, to: "user@zulip.example.com", content: "Hello, Zulip!")
-client.send_message(type: :stream, to: ["user1@zulip.example.com", "user2@zulip.example.com"], content: "Hello, Zulip!")
+client.send_message(type: :private, to: "user@zulip.example.com", content: "Hello, Zulip!")
+client.send_message(type: :private, to: ["user1@zulip.example.com", "user2@zulip.example.com"], content: "Hello, Zulip!")
 ```
 
 Receive all events:
