@@ -68,8 +68,12 @@ module Zulip
         request.url("/api/v1/events")
         request.body = { "queue_id" => queue_id }
       end
-      if response.success?
+      case
+      when response.success?
         JSON.parse(response.body, symbolize_names: true)[:result] == "success"
+      when (400..499).include?(response.status)
+        res = JSON.parse(response.body, symbolize_names: true)
+        raise Zulip::ResponseError, res[:msg]
       else
         raise Zulip::ResponseError, response.reason_phrase
       end
