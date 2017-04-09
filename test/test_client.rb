@@ -52,8 +52,17 @@ class TestClient < Test::Unit::TestCase
   end
 
   sub_test_case "#register" do
-    data("no arguments" => [],
-         "message" => ["message"],
+    test "no arguments" do
+      response_body = %q({"msg":"","max_message_id":-1,"last_event_id":-1,"result":"success","queue_id":"1491023319:1"})
+      stub_request(:post, zulip_api("register"))
+        .with(body: "")
+        .to_return(status: 200, body: response_body)
+      queue_id, last_event_id = @client.register(event_types: [])
+      assert_equal("1491023319:1", queue_id)
+      assert_equal(-1, last_event_id)
+    end
+
+    data("message" => ["message"],
          "multiple" => ["message", "subscriptions"])
     test "succeeded" do |event_types|
       response_body = %q({"msg":"","max_message_id":-1,"last_event_id":-1,"result":"success","queue_id":"1491023319:1"})
