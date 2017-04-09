@@ -12,7 +12,7 @@ class TestClient < Test::Unit::TestCase
   setup do
     @client = Zulip::Client.new(site: zulip_site.to_s,
                                 username: "test",
-                                api_token: "test_token")
+                                api_key: "test_token")
   end
 
   sub_test_case "#send_message" do
