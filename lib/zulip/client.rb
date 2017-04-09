@@ -71,7 +71,7 @@ module Zulip
       if response.success?
         JSON.parse(response.body, symbolize_names: true)[:result] == "success"
       else
-        raise Zulip::ResponseError, reqponse.reason_phrase
+        raise Zulip::ResponseError, response.reason_phrase
       end
     end
 
