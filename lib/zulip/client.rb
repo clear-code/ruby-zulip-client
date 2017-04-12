@@ -80,47 +80,34 @@ module Zulip
     end
 
     def stream_event(event_types: [], narrow: [])
-      queue_id, last_event_id = register(event_types: event_types, narrow: narrow)
-      response_reader, response_writer = IO.pipe
-      command_reader, @command_writer = IO.pipe
       @running = true
-      t = Thread.new do
-        loop do
-          break unless @running
-          response = get_events(queue_id: queue_id, last_event_id: last_event_id)
-          response_writer.write(response)
-          sleep(1)
-        end
-      end
-      buf = ""
+      queue_id, last_event_id = register(event_types: event_types, narrow: narrow)
       loop do
-        reader, _writer, _exception = IO.select([response_reader, command_reader])
-        case reader.first
-        when response_reader
-          buf << response_reader.readpartial(1024)
-          begin
-            res = JSON.parse(buf, symbolize_names: true)
-          rescue JSON::ParserError
-            # Ignore error because buf is incomplete JSON
-            next
+        break unless @running
+        response = nil
+        @connection.in_parallel do
+          response = @connection.get do |request|
+            request.url("/api/v1/events")
+            request.params["queue_id"] = queue_id
+            request.params["last_event_id"] = last_event_id
           end
-          buf = ""
-          if res[:result] == "success"
-            res[:events].each do |event|
-              last_event_id = event[:id]
-              if event_types.empty? || event_types.include?(event[:type])
-                yield event
-              end
+        end
+
+        if response.success?
+          res = JSON.parse(response.body, symbolize_names: true)
+          raise Zulip::ResponseError, res[:msg] unless res[:result] == "success"
+          res[:events].each do |event|
+            last_event_id = event[:id]
+            if event_types.empty? || event_types.include?(event[:type])
+              yield event
             end
-          else
-            raise Zulip::ResponseError, res[:msg]
           end
-        when command_reader
-          break
+        else
+          raise Zulip::ResponseError, response.reason_phrase
         end
       end
+    ensure
       unregister(queue_id)
-      t.join
     end
 
     def stream_message(narrow: [])
@@ -131,23 +118,6 @@ module Zulip
 
     def close_stream
       @running = false
-      @command_writer.write("q") if @command_writer
-    end
-
-    private
-
-    def get_events(queue_id:, last_event_id:)
-      response = @connection.get do |request|
-        request.url("/api/v1/events")
-        request.params["queue_id"] = queue_id
-        request.params["last_event_id"] = last_event_id
-        request.params["dont_block"] = true
-      end
-      if response.success?
-        response.body
-      else
-        raise Zulip::ResponseError, response.reason_phrase
-      end
     end
   end
 end
