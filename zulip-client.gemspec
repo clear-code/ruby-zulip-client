@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "Zulip client for Ruby"
   spec.description   = "Zulip client for Ruby"
-  spec.homepage      = "https://github.com/okkez/zulip-client-ruby"
+  spec.homepage      = "https://github.com/okkez/ruby-zulip-client"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
