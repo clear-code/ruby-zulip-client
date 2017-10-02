@@ -25,7 +25,7 @@ Send message to stream:
 ```ruby
 client = Zulip::Client.new(site: "https://zulip.example.com/",
                            username: "test-bot@zulip.example.com",
-                           api_token: "xxxxxxxxxxxxx")
+                           api_key: "xxxxxxxxxxxxx")
 client.send_message(type: :stream, to: "general", subject: "projects", content: "Hello, Zulip!")
 ```
 
