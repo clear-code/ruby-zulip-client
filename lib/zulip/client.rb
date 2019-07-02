@@ -107,7 +107,7 @@ module Zulip
           when 400..499
             raise Zulip::ResponseError, response.reason_phrase
           when 500..599
-            puts "Rtrying..."
+            puts "Retrying..."
             sleep 1
           end
         end
