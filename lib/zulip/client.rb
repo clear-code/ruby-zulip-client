@@ -10,12 +10,17 @@ Faraday.default_adapter = :typhoeus
 
 module Zulip
   class Client
+    DEFAULT_OPEN_TIMEOUT = 30
+    DEFAULT_TIMEOUT = 90
+
     attr_accessor :debug
 
     def initialize(site:, username:, api_key:, **options)
       @site = URI.parse(site)
       @connection = Faraday.new(@site.to_s, options) do |faraday|
         faraday.adapter Faraday.default_adapter
+        faraday.options[:open_timeout] ||= DEFAULT_OPEN_TIMEOUT
+        faraday.options[:timeout] ||= DEFAULT_TIMEOUT
         yield faraday if block_given?
       end
       @connection.basic_auth(username, api_key)
@@ -84,13 +89,11 @@ module Zulip
       queue_id, last_event_id = register(event_types: event_types, narrow: narrow)
       loop do
         break unless @running
-        response = nil
-        @connection.in_parallel do
-          response = @connection.get do |request|
-            request.url("/api/v1/events")
-            request.params["queue_id"] = queue_id
-            request.params["last_event_id"] = last_event_id
-          end
+
+        response = @connection.get do |request|
+          request.url("/api/v1/events")
+          request.params["queue_id"] = queue_id
+          request.params["last_event_id"] = last_event_id
         end
 
         if response.success?
