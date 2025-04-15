@@ -64,7 +64,7 @@ module Zulip
         res = JSON.parse(response.body, symbolize_names: true)
         [res[:queue_id], res[:last_event_id]]
       else
-        raise Zulip::ResponseError, reqponse.reason_phrase
+        raise Zulip::ResponseError, response.reason_phrase
       end
     end
 
