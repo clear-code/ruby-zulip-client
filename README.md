@@ -54,7 +54,7 @@ end
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/okkez/zulip-client.
+Bug reports and pull requests are welcome on GitHub at https://github.com/clear-code/zulip-client.
 
 
 ## License
