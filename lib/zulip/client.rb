@@ -1,8 +1,7 @@
 require "json"
 require "uri"
 require "faraday"
-require "typhoeus"
-require "typhoeus/adapters/faraday"
+require "faraday/typhoeus"
 
 require "zulip/error"
 
@@ -18,12 +17,12 @@ module Zulip
     def initialize(site:, username:, api_key:, **options)
       @site = URI.parse(site)
       @connection = Faraday.new(@site.to_s, options) do |faraday|
-        faraday.adapter Faraday.default_adapter
+        faraday.adapter :typhoeus
         faraday.options[:open_timeout] ||= DEFAULT_OPEN_TIMEOUT
         faraday.options[:timeout] ||= DEFAULT_TIMEOUT
+        faraday.request :authorization, :basic, username, api_key
         yield faraday if block_given?
       end
-      @connection.basic_auth(username, api_key)
       @running = false
       @debug = false
     end
