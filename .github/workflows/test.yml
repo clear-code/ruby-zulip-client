@@ -1,0 +1,43 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+        ruby-version: ['2.7', '3.0', '3.1', '3.2', '3.3', '3.4', '4.0']
+
+    name: Ruby ${{ matrix.ruby-version }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+
+      - name: Replace libcurl.dll
+        if: runner.os == 'Windows'
+        run: |
+          # The `libcurl.dll` bundled with Ruby on Windows (MSYS2) has missing dependencies and cannot be loaded by `ethon` out of the box. (Ref: https://github.com/typhoeus/typhoeus/issues/720)
+          choco install curl --no-progress
+
+          $curlTools = "C:\ProgramData\chocolatey\lib\curl\tools"
+          $srcDll = Get-ChildItem -Path $curlTools -Filter "libcurl*.dll" -Recurse | Select-Object -First 1
+
+          $rubyBin = Split-Path (Get-Command ruby.exe).Source
+          $destDll = Join-Path $rubyBin "libcurl.dll"
+          Copy-Item -Path $srcDll.FullName -Destination $destDll -Force
+
+      - name: Run tests
+        run: bundle exec rake
